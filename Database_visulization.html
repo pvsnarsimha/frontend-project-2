@@ -1,0 +1,2579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRAZIL Database Express Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* All the CSS styles from the original file remain unchanged */
+        :root {
+            --primary-color: #0067a5;
+            --secondary-color: #005a8e;
+            --border-color: #7f9db9;
+            --bg-color: #f0f3f5;
+            --text-color: #333;
+            --panel-bg: white;
+            --header-bg: linear-gradient(to bottom, #7f9db9, #6b8caa);
+            --sidebar-bg: #e1e7ec;
+            --status-bar-bg: linear-gradient(to bottom, #e1e7ec, #d0dde6);
+        }
+
+        .theme-dark {
+            --primary-color: #4a90e2;
+            --secondary-color: #3a70b2;
+            --border-color: #5a6c7d;
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --panel-bg: #2d2d2d;
+            --header-bg: linear-gradient(to bottom, #3a3a3a, #2d2d2d);
+            --sidebar-bg: #252525;
+            --status-bar-bg: linear-gradient(to bottom, #252525, #1f1f1f);
+        }
+
+        .theme-high-contrast {
+            --primary-color: #000000;
+            --secondary-color: #ffffff;
+            --border-color: #ffeb3b;
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --panel-bg: #121212;
+            --header-bg: linear-gradient(to bottom, #000000, #222222);
+            --sidebar-bg: #181818;
+            --status-bar-bg: linear-gradient(to bottom, #000000, #222222);
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: all 0.3s ease;
+        }
+        .header {
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 8px 15px;
+            font-weight: bold;
+            font-size: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-tabs {
+            background: linear-gradient(to bottom, #d0dde6, #b8c9d6);
+            border-bottom: 1px solid var(--border-color);
+            padding: 4px 10px 0;
+        }
+        .theme-dark .nav-tabs {
+            background: linear-gradient(to bottom, #3a3a3a, #2d2d2d);
+        }
+        .theme-high-contrast .nav-tabs {
+            background: linear-gradient(to bottom, #000000, #222222);
+        }
+        .nav-tab {
+            background: linear-gradient(to bottom, #e9eef2, #d0dde6);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            padding: 5px 15px;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            margin-right: 3px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .theme-dark .nav-tab {
+            background: linear-gradient(to bottom, #3a3a3a, #2d2d2d);
+            color: #e0e0e0;
+        }
+        .theme-high-contrast .nav-tab {
+            background: linear-gradient(to bottom, #000000, #222222);
+            color: #ffffff;
+            border-color: #ffeb3b;
+        }
+        .nav-tab.active {
+            background: var(--panel-bg);
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            margin: 10px;
+            border-radius: 3px;
+        }
+        .panel-header {
+            background: var(--header-bg);
+            color: white;
+            padding: 6px 10px;
+            font-weight: bold;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .panel-content {
+            padding: 12px;
+        }
+        .button {
+            background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: linear-gradient(to bottom, #e6e6e6, #d6d6d6);
+        }
+        .theme-dark .button {
+            background: linear-gradient(to bottom, #3a3a3a, #2d2d2d);
+            color: #e0e0e0;
+        }
+        .theme-high-contrast .button {
+            background: linear-gradient(to bottom, #000000, #222222);
+            color: #ffffff;
+            border-color: #ffeb3b;
+        }
+        .button-primary {
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: 1px solid var(--border-color);
+        }
+        .button-primary:hover {
+            background: linear-gradient(to bottom, var(--secondary-color), var(--primary-color));
+        }
+        .sql-input {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+            font-family: monospace;
+            font-size: 13px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .table th {
+            background: linear-gradient(to bottom, #e1e7ec, #d0dde6);
+            color: var(--text-color);
+            padding: 5px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+            font-weight: bold;
+        }
+        .theme-dark .table th {
+            background: linear-gradient(to bottom, #3a3a3a, #2d2d2d);
+        }
+        .theme-high-contrast .table th {
+            background: linear-gradient(to bottom, #000000, #222222);
+            border-color: #ffeb3b;
+        }
+        .table td {
+            padding: 5px;
+            border: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+        }
+        .table tr:nth-child(even) td {
+            background-color: #f7f9fb;
+        }
+        .theme-dark .table tr:nth-child(even) td {
+            background-color: #353535;
+        }
+        .theme-high-contrast .table tr:nth-child(even) td {
+            background-color: #1a1a1a;
+        }
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            width: 200px;
+        }
+        .sidebar-item {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .sidebar-item:hover {
+            background-color: #d0dde6;
+        }
+        .theme-dark .sidebar-item:hover {
+            background-color: #3a3a3a;
+        }
+        .theme-high-contrast .sidebar-item:hover {
+            background-color: #000000;
+        }
+        .status-bar {
+            background: var(--status-bar-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 4px 10px;
+            font-size: 12px;
+            color: var(--text-color);
+        }
+        pre { 
+            background: #2d2d2d; 
+            color: #f8f8f2; 
+            padding: 10px; 
+            border-radius: 3px; 
+            font-size: 12px;
+        }
+        .tooltip { 
+            position: relative; 
+            display: inline-block; 
+        }
+        .tooltip .tooltiptext { 
+            visibility: hidden; 
+            width: 120px; 
+            background-color: #555; 
+            color: #fff; 
+            text-align: center; 
+            border-radius: 4px; 
+            padding: 5px; 
+            position: absolute; 
+            z-index: 1; 
+            bottom: 125%; 
+            left: 50%; 
+            margin-left: -60px; 
+            opacity: 0; 
+            transition: opacity 0.3s; 
+            font-size: 11px;
+        }
+        .tooltip:hover .tooltiptext { 
+            visibility: visible; 
+            opacity: 1; 
+        }
+        .query-examples {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+        .breadcrumb {
+            font-size: 12px;
+            color: #666;
+            padding: 5px 15px;
+            background-color: #f7f9fb;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .theme-dark .breadcrumb {
+            background-color: #353535;
+            color: #e0e0e0;
+        }
+        .theme-high-contrast .breadcrumb {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .constraint-examples {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .subquery-examples {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .error-message {
+            color: #d00;
+            background-color: #ffeeee;
+            padding: 8px;
+            border-radius: 3px;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        .success-message {
+            color: #007700;
+            background-color: #eeffee;
+            padding: 8px;
+            border-radius: 3px;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
+        /* Resizable panels */
+        .resizable {
+            resize: both;
+            overflow: auto;
+            min-height: 100px;
+            min-width: 150px;
+        }
+        
+        /* Drag and drop */
+        .draggable {
+            cursor: move;
+        }
+        
+        /* Full screen mode */
+        .fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1000;
+            background: var(--panel-bg);
+        }
+        
+        /* Query builder */
+        .query-builder {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        /* Tabs */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Chart container */
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        /* Query Builder Styles */
+        .selected-table {
+            background-color: #cce5ff !important;
+        }
+        .selected-column {
+            background-color: #e6ffcc !important;
+        }
+        .theme-dark .selected-table {
+            background-color: #2c5282 !important;
+        }
+        .theme-dark .selected-column {
+            background-color: #2d4a1f !important;
+        }
+        .theme-high-contrast .selected-table {
+            background-color: #ffff00 !important;
+            color: #000000 !important;
+        }
+        .theme-high-contrast .selected-column {
+            background-color: #00ff00 !important;
+            color: #000000 !important;
+        }
+        .query-builder-section {
+            margin-bottom: 10px;
+        }
+        .query-builder-section h4 {
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .condition-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            margin: 3px 0;
+            background-color: #f5f5f5;
+            border-radius: 3px;
+        }
+        .theme-dark .condition-item {
+            background-color: #3a3a3a;
+        }
+        .theme-high-contrast .condition-item {
+            background-color: #222222;
+        }
+        
+        /* New styles for logical operators */
+        .logical-operator {
+            margin: 5px 0;
+            padding: 3px;
+            background-color: #e6f7ff;
+            border-radius: 3px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .theme-dark .logical-operator {
+            background-color: #2c5282;
+        }
+        .theme-high-contrast .logical-operator {
+            background-color: #ffff00;
+            color: #000000;
+        }
+        
+        /* New styles for AI features */
+        .ai-assistant {
+            background-color: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .theme-dark .ai-assistant {
+            background-color: #1e3a5f;
+            border-left-color: #60a5fa;
+        }
+        .theme-high-contrast .ai-assistant {
+            background-color: #004466;
+            border-left-color: #ffff00;
+        }
+        .ai-suggestion {
+            cursor: pointer;
+            padding: 5px;
+            margin: 3px 0;
+            border-radius: 3px;
+            background-color: #e6f7ff;
+        }
+        .theme-dark .ai-suggestion {
+            background-color: #2c5282;
+        }
+        .theme-high-contrast .ai-suggestion {
+            background-color: #004466;
+        }
+        .ai-suggestion:hover {
+            background-color: #bae6fd;
+        }
+        .theme-dark .ai-suggestion:hover {
+            background-color: #1e40af;
+        }
+        .theme-high-contrast .ai-suggestion:hover {
+            background-color: #006699;
+        }
+        .nl-input-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .nl-input {
+            padding-right: 80px;
+        }
+        .nl-button {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            height: calc(100% - 10px);
+        }
+        .autocomplete-suggestions {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .theme-dark .autocomplete-suggestions {
+            background: #2d2d2d;
+            border-color: #555;
+        }
+        .theme-high-contrast .autocomplete-suggestions {
+            background: #000;
+            border-color: #ffeb3b;
+        }
+        .autocomplete-suggestion {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .autocomplete-suggestion:hover {
+            background-color: #f0f0f0;
+        }
+        .theme-dark .autocomplete-suggestion:hover {
+            background-color: #3a3a3a;
+        }
+        .theme-high-contrast .autocomplete-suggestion:hover {
+            background-color: #222222;
+        }
+
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <div class="header">
+        <div>CRAZIL Database Express Edition</div>
+        <div class="flex items-center space-x-2">
+            <select id="themeSelector" class="text-black text-xs p-1 rounded" onchange="changeTheme(this.value)">
+                <option value="light">Light Theme</option>
+                <option value="dark">Dark Theme</option>
+                <option value="high-contrast">High Contrast</option>
+            </select>
+            <button class="button text-xs" onclick="toggleFullScreen()">Full Screen</button>
+            <button class="button text-xs" onclick="showSettings()">Settings</button>
+               <button class="button text-xs" onclick="exitToIntro()">Exit</button>
+        </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        Name > SQL > SQL Command Line
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <span class="nav-tab active" onclick="switchTab('sql')">SQL</span>
+        <span class="nav-tab" onclick="switchTab('results')">Results</span>
+        <span class="nav-tab" onclick="switchTab('explain')">Explain Plan</span>
+        <span class="nav-tab" onclick="switchTab('history')">SQL History</span>
+        <span class="nav-tab" onclick="switchTab('saved')">Saved SQL</span>
+        <span class="nav-tab" onclick="switchTab('builder')">Query Builder</span>
+        <span class="nav-tab" onclick="switchTab('charts')">Charts</span>
+        <span class="nav-tab" onclick="switchTab('ai')">AI Assistant</span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-header">Objects</div>
+                <div class="panel-content p-0" id="objectsList">
+                    <div class="sidebar-item" onclick="showTable('employees')">EMPLOYEES</div>
+                    <div class="sidebar-item" onclick="showTable('departments')">DEPARTMENTS</div>
+                    <div class="sidebar-item" onclick="showTable('projects')">PROJECTS</div>
+                </div>
+            </div>
+            
+            <div class="panel mt-3">
+                <div class="panel-header">History</div>
+                <div class="panel-content p-0" id="queryHistory">
+                    <div class="sidebar-item">No queries yet</div>
+                </div>
+            </div>
+            
+            <div class="panel mt-3">
+                <div class="panel-header">Saved Queries</div>
+                <div class="panel-content p-0" id="savedQueries">
+                    <div class="sidebar-item">No saved queries</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- SQL Tab -->
+            <div id="sql-tab" class="tab-content active">
+                <!-- Query Tabs -->
+                <div class="mx-2 mt-2 flex border-b border-gray-300" id="queryTabsContainer">
+                    <div class="px-4 py-2 bg-gray-200 border border-b-0 border-gray-300 rounded-t cursor-pointer font-medium" onclick="switchQueryTab(0)">
+                        Query 1
+                    </div>
+                    <div class="px-4 py-2 border-b border-gray-300 cursor-pointer" onclick="addNewQueryTab()">
+                        +
+                    </div>
+                </div>
+
+                <!-- Query Area -->
+                <div class="panel mx-2 mt-0">
+                    <div class="panel-header">
+                        Enter SQL Statement
+                        <div class="float-right">
+                            <button class="button button-primary" onclick="executeQuery()">Run</button>
+                            <button class="button" onclick="saveQuery()">Save</button>
+                        </div>
+                    </div>
+                    <div class="panel-content p-0">
+                        <textarea id="sqlQuery0" rows="6" class="sql-input" oninput="highlightQuery(0); handleSqlInput(0)" placeholder="Enter SQL statement or PL/SQL command and click Run to see the results."></textarea>
+                    </div>
+                </div>
+
+                <!-- AI Query Optimization & Explanation -->
+                <div class="panel mx-2 mt-2" id="aiOptimizationPanel" style="display: none;">
+                    <div class="panel-header">AI Query Analysis</div>
+                    <div class="panel-content">
+                        <div id="aiAnalysisResult"></div>
+                    </div>
+                </div>
+
+                <!-- Predefined Queries -->
+                <div class="panel mx-2 mt-2">
+                    <div class="panel-header">Example Queries</div>
+                    <div class="panel-content">
+                        <div class="query-examples">
+                            <button onclick="runExample('create')" class="button tooltip">
+                                <span>Create Tables</span>
+                                <span class="tooltiptext">Create employees and departments</span>
+                            </button>
+                            <button onclick="runExample('insert')" class="button tooltip">
+                                <span>INSERT</span>
+                                <span class="tooltiptext">Insert sample data</span>
+                            </button>
+                            <button onclick="runExample('select')" class="button tooltip">
+                                <span>SELECT</span>
+                                <span class="tooltiptext">Select with conditions</span>
+                            </button>
+                            <button onclick="runExample('update')" class="button tooltip">
+                                <span>UPDATE</span>
+                                <span class="tooltiptext">Update salaries</span>
+                            </button>
+                            <button onclick="runExample('delete')" class="button tooltip">
+                                <span>DELETE</span>
+                                <span class="tooltiptext">Delete records</span>
+                            </button>
+                            <button onclick="runExample('drop')" class="button tooltip">
+                                <span>DROP</span>
+                                <span class="tooltiptext">Drop tables</span>
+                            </button>
+                            <button onclick="runExample('alter')" class="button tooltip">
+                                <span>ALTER</span>
+                                <span class="tooltiptext">Add column</span>
+                            </button>
+                            <button onclick="runExample('truncate')" class="button tooltip">
+                                <span>TRUNCATE</span>
+                                <span class="tooltiptext">Clear table data</span>
+                            </button>
+                            <button onclick="runExample('merge')" class="button tooltip">
+                                <span>MERGE</span>
+                                <span class="tooltiptext">Upsert operation</span>
+                            </button>
+                            <button onclick="runExample('join')" class="button tooltip">
+                                <span>JOIN</span>
+                                <span class="tooltiptext">Join tables</span>
+                            </button>
+                            <button onclick="runExample('case')" class="button tooltip">
+                                <span>CASE</span>
+                                <span class="tooltiptext">Conditional logic</span>
+                            </button>
+                            <button onclick="runExample('aggregate')" class="button tooltip">
+                                <span>AGGREGATE</span>
+                                <span class="tooltiptext">Count, Sum, etc.</span>
+                            </button>
+                        </div>
+                        
+                        <div class="constraint-examples">
+                            <button onclick="runExample('not_null')" class="button tooltip">
+                                <span>NOT NULL</span>
+                                <span class="tooltiptext">NOT NULL constraint</span>
+                            </button>
+                            <button onclick="runExample('unique')" class="button tooltip">
+                                <span>UNIQUE</span>
+                                <span class="tooltiptext">UNIQUE constraint</span>
+                            </button>
+                            <button onclick="runExample('primary')" class="button tooltip">
+                                <span>PRIMARY KEY</span>
+                                <span class="tooltiptext">PRIMARY KEY constraint</span>
+                            </button>
+                            <button onclick="runExample('foreign')" class="button tooltip">
+                                <span>FOREIGN KEY</span>
+                                <span class="tooltiptext">FOREIGN KEY constraint</span>
+                            </button>
+                            <button onclick="runExample('check')" class="button tooltip">
+                                <span>CHECK</span>
+                                <span class="tooltiptext">CHECK constraint</span>
+                            </button>
+                            <button onclick="runExample('default')" class="button tooltip">
+                                <span>DEFAULT</span>
+                                <span class="tooltiptext">DEFAULT constraint</span>
+                            </button>
+                            <button onclick="runExample('auto_increment')" class="button tooltip">
+                                <span>AUTO INCREMENT</span>
+                                <span class="tooltiptext">AUTO INCREMENT field</span>
+                            </button>
+                        </div>
+                        
+                        <div class="subquery-examples">
+                            <button onclick="runExample('subquery_where')" class="button tooltip">
+                                <span>WHERE Subquery</span>
+                                <span class="tooltiptext">Subquery in WHERE clause</span>
+                            </button>
+                            <button onclick="runExample('subquery_select')" class="button tooltip">
+                                <span>SELECT Subquery</span>
+                                <span class="tooltiptext">Subquery in SELECT clause</span>
+                            </button>
+                            <button onclick="runExample('subquery_from')" class="button tooltip">
+                                <span>FROM Subquery</span>
+                                <span class="tooltiptext">Subquery in FROM clause</span>
+                            </button>
+                            <button onclick="runExample('subquery_exists')" class="button tooltip">
+                                <span>EXISTS</span>
+                                <span class="tooltiptext">EXISTS subquery</span>
+                            </button>
+                            <button onclick="runExample('subquery_in')" class="button tooltip">
+                                <span>IN Subquery</span>
+                                <span class="tooltiptext">IN with subquery</span>
+                            </button>
+                            <button onclick="runExample('subquery_correlated')" class="button tooltip">
+                                <span>Correlated</span>
+                                <span class="tooltiptext">Correlated subquery</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Tab -->
+            <div id="results-tab" class="tab-content">
+                <!-- Results Area -->
+                <div class="panel mx-2 mt-2 flex-1">
+                    <div class="panel-header">
+                        Results
+                        <div>
+                            <button class="button" onclick="exportData('csv')">Export CSV</button>
+                            <button class="button" onclick="exportData('json')">Export JSON</button>
+                            <button class="button" onclick="exportData('excel')">Export Excel</button>
+                            <button class="button" onclick="exportData('pdf')">Export PDF</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div id="output" class="text-sm">No data to display. Execute a query to see results.</div>
+                    </div>
+                </div>
+
+                <!-- Table Preview -->
+                <div class="panel mx-2 mt-2 mb-2 flex-1">
+                    <div class="panel-header">Data Preview</div>
+                    <div class="panel-content">
+                        <div id="tablePreview" class="text-sm">No table selected. Click on a table name in the Objects panel.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Explain Plan Tab -->
+            <div id="explain-tab" class="tab-content">
+                <div class="panel mx-2 mt-2">
+                    <div class="panel-header">Explain Plan</div>
+                    <div class="panel-content">
+                        <div id="explainOutput">No explain plan generated yet.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="history-tab" class="tab-content">
+                <div class="panel mx-2 mt-2">
+                    <div class="panel-header">Query History</div>
+                    <div class="panel-content">
+                        <div id="historyList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Saved SQL Tab -->
+            <div id="saved-tab" class="tab-content">
+                <div class="panel mx-2 mt-2">
+                    <div class="panel-header">Saved Queries</div>
+                    <div class="panel-content">
+                        <div id="savedList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Query Builder Tab -->
+            <div id="builder-tab" class="tab-content">
+                <div class="panel mx-2 mt-2">
+                    <div class="panel-header">Visual Query Builder</div>
+                    <div class="panel-content">
+                        <div class="query-builder">
+                            <div class="query-builder-section">
+                                <h4>Tables</h4>
+                                <div id="tablesList" class="border p-2 h-40 overflow-auto">
+                                    <div class="text-sm text-gray-500">No tables found. Create tables first.</div>
+                                </div>
+                                <button class="button mt-2" onclick="refreshQueryBuilder()">Refresh Tables</button>
+                            </div>
+                            
+                            <div class="query-builder-section">
+                                <h4>Columns</h4>
+                                <div id="columnsList" class="border p-2 h-40 overflow-auto">
+                                    <div class="text-sm text-gray-500">Select a table first</div>
+                                </div>
+                                <div class="flex space-x-2 mt-2">
+                                    <button class="button flex-1" onclick="selectAllColumns()">Select All</button>
+                                    <button class="button flex-1" onclick="deselectAllColumns()">Deselect All</button>
+                                </div>
+                            </div>
+                            
+                            <div class="query-builder-section">
+                                <h4>Conditions</h4>
+                                <div class="border p-2">
+                                    <select id="conditionColumn" class="sql-input mb-2 w-full">
+                                        <option value="">-- Select Column --</option>
+                                    </select>
+                                    <select id="conditionOperator" class="sql-input mb-2 w-full">
+                                        <option value="=">=</option>
+                                        <option value="!=">!=</option>
+                                        <option value=">">></option>
+                                        <option value=">=">>=</option>
+                                        <option value="<"><</option>
+                                        <option value="<="><=</option>
+                                        <option value="LIKE">LIKE</option>
+                                        <option value="NOT LIKE">NOT LIKE</option>
+                                        <option value="IN">IN</option>
+                                        <option value="NOT IN">NOT IN</option>
+                                        <option value="IS NULL">IS NULL</option>
+                                        <option value="IS NOT NULL">IS NOT NULL</option>
+                                    </select>
+                                    <input type="text" id="conditionValue" placeholder="Value" class="sql-input mb-2 w-full">
+                                    <div class="flex space-x-2 mb-2">
+                                        <button class="button flex-1" onclick="addCondition('AND')">Add AND Condition</button>
+                                        <button class="button flex-1" onclick="addCondition('OR')">Add OR Condition</button>
+                                    </div>
+                                    <div id="conditionsList" class="mt-2 max-h-32 overflow-auto"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="query-builder-section">
+                                <h4>Sorting</h4>
+                                <div class="border p-2">
+                                    <select id="sortColumn" class="sql-input mb-2 w-full">
+                                        <option value="">-- Select Column --</option>
+                                    </select>
+                                    <select id="sortDirection" class="sql-input mb-2 w-full">
+                                        <option value="ASC">Ascending</option>
+                                        <option value="DESC">Descending</option>
+                                    </select>
+                                    <button class="button w-full" onclick="addSort()">Add Sort</button>
+                                    <div id="sortList" class="mt-2 max-h-32 overflow-auto"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="query-builder-section">
+                                <h4>Generated SQL</h4>
+                                <textarea id="generatedSql" class="sql-input h-40" readonly></textarea>
+                                <div class="flex space-x-2 mt-2">
+                                    <button class="button button-primary flex-1" onclick="useGeneratedSql()">Use This Query</button>
+                                    <button class="button flex-1" onclick="executeGeneratedSql()">Run This Query</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Tab -->
+            <div id="charts-tab" class="tab-content">
+                <div class="panel mx-2 mt-2">
+                    <div class="panel-header">Chart Visualization</div>
+                    <div class="panel-content">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Select Table</label>
+                                <select id="chartTable" class="sql-input w-full" onchange="updateChartColumns()">
+                                    <option value="">-- Select Table --</option>
+                                </select>
+                                <button class="button mt-2 w-full" onclick="refreshChartTables()">Refresh Tables</button>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Chart Type</label>
+                                <select id="chartType" class="sql-input w-full">
+                                    <option value="bar">Bar Chart</option>
+                                    <option value="line">Line Chart</option>
+                                    <option value="pie">Pie Chart</option>
+                                    <option value="doughnut">Doughnut Chart</option>
+                                    <option value="scatter">Scatter Plot</option>
+                                    <option value="polarArea">Polar Area</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Label Column (X-axis)</label>
+                                <select id="labelColumn" class="sql-input w-full">
+                                    <option value="">-- Select Column --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Data Column (Y-axis)</label>
+                                <select id="dataColumn" class="sql-input w-full">
+                                    <option value="">-- Select Column --</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Aggregate Function</label>
+                                <select id="aggregateFunction" class="sql-input w-full">
+                                    <option value="NONE">None</option>
+                                    <option value="COUNT">COUNT</option>
+                                    <option value="SUM">SUM</option>
+                                    <option value="AVG">AVG</option>
+                                    <option value="MIN">MIN</option>
+                                    <option value="MAX">MAX</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Group By Column</label>
+                                <select id="groupByColumn" class="sql-input w-full">
+                                    <option value="">-- Select Column --</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button class="button button-primary" onclick="generateChart()">Generate Chart</button>
+                            <button class="button" onclick="clearChart()">Clear Chart</button>
+                            <button class="button" onclick="saveChart()">Save Chart</button>
+                        </div>
+                        
+                        <div class="chart-container mt-4">
+                            <canvas id="dataChart"></canvas>
+                        </div>
+                        
+                        <div id="chartError" class="error-message mt-4 hidden"></div>
+                    </div>
+                </div>
+            </div>
+              <!-- AI Assistant Tab -->
+            <div id="ai-tab" class="tab-content">
+                <div class="panel mx-2 mt-2">
+                    <div class="panel-header">AI Assistant</div>
+                    <div class="panel-content">
+                        <div class="mb-4">
+                            <h3 class="font-bold mb-2">Natural Language to SQL</h3>
+                            <div class="nl-input-container">
+                                <input type="text" id="nlQueryInput" class="sql-input nl-input" placeholder="Ask a question in plain English (e.g., 'Show me the top 5 employees by salary')">
+                                <button class="button button-primary nl-button" onclick="processNlQuery()">Convert to SQL</button>
+                            </div>
+                            <div id="nlQueryResult" class="mt-2 p-2 border rounded bg-gray-50 min-h-20">
+                                <p class="text-gray-500 text-sm">Your SQL query will appear here...</p>
+                            </div>
+                            <div class="flex space-x-2 mt-2">
+                                <button class="button flex-1" onclick="useNlQuery()">Use This Query</button>
+                                <button class="button flex-1" onclick="executeNlQuery()">Run This Query</button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h3 class="font-bold mb-2">AI Query Optimization</h3>
+                            <div class="flex space-x-2 mb-2">
+                                <button class="button flex-1" onclick="optimizeCurrentQuery()">Optimize Current Query</button>
+                                <button class="button flex-1" onclick="explainCurrentQuery()">Explain Current Query</button>
+                            </div>
+                            <div id="aiOptimizationResult" class="p-2 border rounded bg-gray-50 min-h-20">
+                                <p class="text-gray-500 text-sm">Optimization suggestions will appear here...</p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-bold mb-2">Context-Aware Autocomplete</h3>
+                            <p class="text-sm mb-2">Try typing in the SQL editor to see AI-powered suggestions based on your schema and query history.</p>
+                            <div class="ai-assistant">
+                                <p class="text-sm"><strong>Tip:</strong> Start typing a table name or column name to see suggestions. The AI will also help with error correction and syntax completion.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+          
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="flex justify-between">
+            <div id="statusMessage">Ready</div>
+            <div id="rowCount">0 rows</div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="panel w-1/2">
+            <div class="panel-header">Settings</div>
+            <div class="panel-content">
+                <h3 class="font-bold mb-2">Keyboard Shortcuts</h3>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div>Execute Query:</div>
+                    <div><input type="text" class="sql-input" value="Ctrl+Enter" readonly></div>
+                    <div>New Tab:</div>
+                    <div><input type="text" class="sql-input" value="Ctrl+T" readonly></div>
+                    <div>Save Query:</div>
+                    <div><input type="text" class="sql-input" value="Ctrl+S" readonly></div>
+                </div>
+                <h3 class="font-bold mb-2">Panel Layout</h3>
+                <div class="mb-4">
+                    <button class="button" onclick="resetLayout()">Reset Layout</button>
+                </div>
+                <div class="flex justify-end">
+                    <button class="button button-primary" onclick="document.getElementById('settingsModal').classList.add('hidden')">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db;
+        let queryHistory = [];
+        let savedQueries = [];
+        let currentQueryTab = 0;
+        let queryTabs = [''];
+        let chart = null;
+        let selectedTable = null;
+        let queryBuilderConditions = [];
+        let queryBuilderSorts = [];
+        let selectedColumns = [];
+        let databaseSchema = {
+            tables: {}
+        };
+
+        // Initialize the database
+        async function initDB() {
+            try {
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+                db = new SQL.Database();
+                updateStatus("Database initialized successfully.");
+                updateObjectsList();
+                updateDatabaseSchema(); // Initialize schema information
+            } catch (error) {
+                updateStatus("Error initializing database: " + error.message);
+            }
+        }
+
+        // Update database schema information for AI features
+        function updateDatabaseSchema() {
+            try {
+                // Get all tables
+                const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table'");
+                databaseSchema.tables = {};
+                
+                if (tables.length && tables[0].values.length) {
+                    tables[0].values.forEach(tableRow => {
+                        const tableName = tableRow[0];
+                        databaseSchema.tables[tableName] = {};
+                        
+                        // Get column information for each table
+                        const columnsInfo = db.exec(`PRAGMA table_info(${tableName})`);
+                        if (columnsInfo.length && columnsInfo[0].values.length) {
+                            databaseSchema.tables[tableName].columns = {};
+                            columnsInfo[0].values.forEach(columnRow => {
+                                const columnName = columnRow[1];
+                                const columnType = columnRow[2];
+                                databaseSchema.tables[tableName].columns[columnName] = columnType;
+                            });
+                        }
+                        
+                        // Get sample data to understand content
+                        try {
+                            const sampleData = db.exec(`SELECT * FROM ${tableName} LIMIT 5`);
+                            if (sampleData.length && sampleData[0].values.length) {
+                                databaseSchema.tables[tableName].sample = sampleData[0].values;
+                            }
+                        } catch (e) {
+                            // Table might be empty or not readable
+                            databaseSchema.tables[tableName].sample = [];
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error("Error updating database schema:", error);
+            }
+        }
+
+
+function updateStatus(message) {
+    document.getElementById('statusMessage').textContent = message;
+}
+
+function displayTable(results, target = 'output') {
+    if (!results || !results[0] || !results[0].values.length) {
+        document.getElementById(target).innerHTML = '<div class="p-2">No results found.</div>';
+        return;
+    }
+    
+    let html = '<table class="table"><tr>';
+    results[0].columns.forEach(col => {
+        html += `<th>${col}</th>`;
+    });
+    html += '</tr>';
+    results[0].values.forEach(row => {
+        html += '<tr>';
+        row.forEach(cell => {
+            html += `<td>${cell ?? 'NULL'}</td>`;
+        });
+        html += '</tr>';
+    });
+    html += '</table>';
+    document.getElementById(target).innerHTML = html;
+}
+
+function executeQuery() {
+    const query = document.getElementById(`sqlQuery${currentQueryTab}`).value.trim();
+    if (!query) {
+        updateStatus("No query to execute.");
+        return;
+    }
+    
+    try {
+        const results = db.exec(query);
+        displayTable(results);
+        addToHistory(query);
+        updateStatus("Query executed successfully.");
+        switchTab('results');
+        
+        // Refresh table lists and schema cache after executing a query that might create/modify tables
+        updateDatabaseSchema();
+        updateObjectsList();
+        updateQueryBuilderTables();
+        updateChartTableList();
+    } catch (error) {
+        document.getElementById('output').innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+        updateStatus("Error executing query: " + error.message);
+    }
+}
+
+function addToHistory(query) {
+    queryHistory.unshift({
+        query,
+        timestamp: new Date().toLocaleString()
+    });
+    
+    if (queryHistory.length > 50) {
+        queryHistory.pop();
+    }
+    
+    updateHistoryDisplay();
+}
+
+function updateHistoryDisplay() {
+    const historyList = document.getElementById('historyList');
+    historyList.innerHTML = '';
+    
+    queryHistory.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'p-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100';
+        div.innerHTML = `
+            <div class="text-xs text-gray-500">${item.timestamp}</div>
+            <div class="text-sm truncate">${item.query}</div>
+        `;
+        div.onclick = () => {
+            document.getElementById(`sqlQuery${currentQueryTab}`).value = item.query;
+            switchTab('sql');
+        };
+        historyList.appendChild(div);
+    });
+}
+
+function saveQuery() {
+    const query = document.getElementById(`sqlQuery${currentQueryTab}`).value.trim();
+    if (!query) {
+        updateStatus("No query to save.");
+        return;
+    }
+    
+    const name = prompt("Enter a name for this query:");
+    if (!name) return;
+    
+    savedQueries.push({
+        name,
+        query,
+        timestamp: new Date().toLocaleString()
+    });
+    
+    updateSavedQueriesDisplay();
+    updateStatus("Query saved successfully.");
+}
+
+function updateSavedQueriesDisplay() {
+    const savedList = document.getElementById('savedList');
+    savedList.innerHTML = '';
+    
+    savedQueries.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'p-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100';
+        div.innerHTML = `
+            <div class="font-bold">${item.name}</div>
+            <div class="text-xs text-gray-500">${item.timestamp}</div>
+            <div class="text-sm truncate">${item.query}</div>
+        `;
+        div.onclick = () => {
+            document.getElementById(`sqlQuery${currentQueryTab}`).value = item.query;
+            switchTab('sql');
+        };
+        savedList.appendChild(div);
+    });
+}
+
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+    document.querySelector(`.nav-tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+    
+    // Refresh chart tables when switching to charts tab
+    if (tabName === 'charts') {
+        updateChartTableList();
+    }
+}
+
+function addNewQueryTab() {
+    const tabCount = queryTabs.length;
+    const newTabIndex = tabCount;
+    queryTabs.push('');
+    
+    const tabsContainer = document.getElementById('queryTabsContainer');
+    const newTab = document.createElement('div');
+    newTab.className = 'px-4 py-2 bg-gray-200 border border-b-0 border-gray-300 rounded-t cursor-pointer';
+    newTab.textContent = `Query ${tabCount + 1}`;
+    newTab.onclick = () => switchQueryTab(newTabIndex);
+    tabsContainer.insertBefore(newTab, tabsContainer.lastElementChild);
+    
+    const queryArea = document.getElementById('sql-tab');
+    const newTextarea = document.createElement('textarea');
+    newTextarea.id = `sqlQuery${newTabIndex}`;
+    newTextarea.className = 'sql-input';
+    newTextarea.rows = 6;
+    newTextarea.placeholder = "Enter SQL statement or PL/SQL command and click Run to see the results.";
+    newTextarea.oninput = () => handleSqlInput(newTabIndex);
+    
+    const panelContent = document.querySelector('#sql-tab .panel-content');
+    panelContent.appendChild(newTextarea);
+    
+    switchQueryTab(newTabIndex);
+}
+
+function switchQueryTab(index) {
+    currentQueryTab = index;
+    const tabs = document.querySelectorAll('#queryTabsContainer > div');
+    tabs.forEach((tab, i) => {
+        if (i === index) {
+            tab.className = 'px-4 py-2 bg-gray-200 border border-b-0 border-gray-300 rounded-t cursor-pointer font-medium';
+        } else if (i < tabs.length - 1) {
+            tab.className = 'px-4 py-2 border-b border-gray-300 cursor-pointer';
+        }
+    });
+    
+    document.querySelectorAll('#sql-tab textarea').forEach((ta, i) => {
+        if (i === index) {
+            ta.classList.remove('hidden');
+        } else {
+            ta.classList.add('hidden');
+        }
+    });
+}
+
+function runExample(type) {
+    let query = '';
+    switch (type) {
+        case 'create':
+            query = `CREATE TABLE employees (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    department TEXT,
+    salary REAL,
+    hire_date TEXT
+);
+
+CREATE TABLE departments (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    location TEXT
+);
+
+CREATE TABLE projects (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    budget REAL,
+    status TEXT
+);`;
+            break;
+        case 'insert':
+            query = `INSERT INTO employees (id, name, department, salary, hire_date) VALUES
+(1, 'John Doe', 'IT', 75000, '2020-01-15'),
+(2, 'Jane Smith', 'HR', 65000, '2019-03-22'),
+(3, 'Robert Johnson', 'IT', 82000, '2018-06-10'),
+(4, 'Emily Davis', 'Marketing', 70000, '2021-09-05'),
+(5, 'Michael Brown', 'Sales', 90000, '2017-11-30');
+
+INSERT INTO departments (id, name, location) VALUES
+(1, 'IT', 'New York'),
+(2, 'HR', 'Chicago'),
+(3, 'Marketing', 'Los Angeles'),
+(4, 'Sales', 'Boston');
+
+INSERT INTO projects (id, name, budget, status) VALUES
+(1, 'Website Redesign', 50000, 'Completed'),
+(2, 'Employee Portal', 75000, 'In Progress'),
+(3, 'Marketing Campaign', 100000, 'Planning'),
+(4, 'Sales Training', 25000, 'Completed');`;
+            break;
+        case 'select':
+            query = 'SELECT * FROM employees WHERE department = "IT" ORDER BY salary DESC;';
+            break;
+        case 'update':
+            query = 'UPDATE employees SET salary = salary * 1.1 WHERE department = "IT";';
+            break;
+        case 'delete':
+            query = 'DELETE FROM employees WHERE id = 5;';
+            break;
+        case 'drop':
+            query = 'DROP TABLE employees;';
+            break;
+        case 'alter':
+            query = 'ALTER TABLE employees ADD COLUMN email TEXT;';
+            break;
+        case 'truncate':
+            query = 'DELETE FROM employees;';
+            break;
+        case 'merge':
+            query = 'INSERT OR REPLACE INTO employees (id, name, department, salary) VALUES (1, "John Doe", "IT", 80000);';
+            break;
+        case 'join':
+            query = 'SELECT e.name, e.department, d.location FROM employees e JOIN departments d ON e.department = d.name;';
+            break;
+        case 'case':
+            query = 'SELECT name, salary, CASE WHEN salary > 80000 THEN "High" WHEN salary > 65000 THEN "Medium" ELSE "Low" END AS salary_grade FROM employees;';
+            break;
+        case 'aggregate':
+            query = 'SELECT department, COUNT(*) as employee_count, AVG(salary) as avg_salary FROM employees GROUP BY department;';
+            break;
+        case 'not_null':
+            query = 'CREATE TABLE test_table (id INTEGER NOT NULL, name TEXT);';
+            break;
+        case 'unique':
+            query = 'CREATE TABLE test_table (id INTEGER UNIQUE, name TEXT);';
+            break;
+        case 'primary':
+            query = 'CREATE TABLE test_table (id INTEGER PRIMARY KEY, name TEXT);';
+            break;
+        case 'foreign':
+            query = 'CREATE TABLE orders (id INTEGER PRIMARY KEY, employee_id INTEGER, FOREIGN KEY(employee_id) REFERENCES employees(id));';
+            break;
+        case 'check':
+            query = 'CREATE TABLE test_table (id INTEGER, age INTEGER CHECK(age >= 18));';
+            break;
+        case 'default':
+            query = 'CREATE TABLE test_table (id INTEGER, created_date TEXT DEFAULT CURRENT_DATE);';
+            break;
+        case 'auto_increment':
+            query = 'CREATE TABLE test_table (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);';
+            break;
+        case 'subquery_where':
+            query = 'SELECT * FROM employees WHERE salary > (SELECT AVG(salary) FROM employees);';
+            break;
+        case 'subquery_select':
+            query = 'SELECT name, salary, (SELECT AVG(salary) FROM employees) as avg_salary FROM employees;';
+            break;
+        case 'subquery_from':
+            query = 'SELECT dept, avg_sal FROM (SELECT department as dept, AVG(salary) as avg_sal FROM employees GROUP BY department);';
+            break;
+        case 'subquery_exists':
+            query = 'SELECT * FROM departments d WHERE EXISTS (SELECT 1 FROM employees e WHERE e.department = d.name);';
+            break;
+        case 'subquery_in':
+            query = 'SELECT * FROM employees WHERE department IN (SELECT name FROM departments WHERE location = "New York");';
+            break;
+        case 'subquery_correlated':
+            query = 'SELECT name, salary, department FROM employees e1 WHERE salary > (SELECT AVG(salary) FROM employees e2 WHERE e2.department = e1.department);';
+            break;
+    }
+    
+    document.getElementById(`sqlQuery${currentQueryTab}`).value = query;
+    handleSqlInput(currentQueryTab);
+    updateStatus(`Loaded ${type} example.`);
+}
+
+function showTable(tableName) {
+    try {
+        const results = db.exec(`SELECT * FROM ${tableName}`);
+        displayTable(results, 'tablePreview');
+        document.getElementById('tablePreview').previousElementSibling.querySelector('.panel-header').textContent = `Data Preview: ${tableName}`;
+        updateStatus(`Displaying data from ${tableName}`);
+    } catch (error) {
+        document.getElementById('tablePreview').innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+        updateStatus("Error displaying table: " + error.message);
+    }
+}
+
+function updateObjectsList() {
+    try {
+        const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table'");
+        if (tables.length && tables[0].values.length) {
+            let html = '';
+            tables[0].values.forEach(row => {
+                html += `<div class="sidebar-item" onclick="showTable('${row[0]}')">${row[0]}</div>`;
+            });
+            document.getElementById('objectsList').innerHTML = html;
+        }
+    } catch (error) {
+        console.error("Error updating objects list:", error);
+    }
+}
+
+function exportData(format) {
+    const query = document.getElementById(`sqlQuery${currentQueryTab}`).value.trim();
+    if (!query) {
+        updateStatus("No query to export.");
+        return;
+    }
+    
+    try {
+        const results = db.exec(query);
+        if (!results || !results[0] || !results[0].values.length) {
+            updateStatus("No data to export.");
+            return;
+        }
+        
+        let data, mimeType, fileName;
+        
+        if (format === 'csv') {
+            // Convert to CSV
+            const headers = results[0].columns.join(',');
+            const rows = results[0].values.map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            );
+            data = [headers, ...rows].join('\n');
+            mimeType = 'text/csv';
+            fileName = 'data.csv';
+        } else if (format === 'json') {
+            // Convert to JSON
+            const jsonData = results[0].values.map(row => {
+                const obj = {};
+                results[0].columns.forEach((col, i) => {
+                    obj[col] = row[i];
+                });
+                return obj;
+            });
+            data = JSON.stringify(jsonData, null, 2);
+            mimeType = 'application/json';
+            fileName = 'data.json';
+        } else if (format === 'excel') {
+            updateStatus("Excel export requires additional libraries. Exporting as CSV instead.");
+            const headers = results[0].columns.join(',');
+            const rows = results[0].values.map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            );
+            data = [headers, ...rows].join('\n');
+            mimeType = 'text/csv';
+            fileName = 'data.csv';
+        } else if (format === 'pdf') {
+            updateStatus("PDF export requires additional libraries. Exporting as CSV instead.");
+            const headers = results[0].columns.join(',');
+            const rows = results[0].values.map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            );
+            data = [headers, ...rows].join('\n');
+            mimeType = 'text/csv';
+            fileName = 'data.csv';
+        }
+        
+        const blob = new Blob([data], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        updateStatus(`Data exported as ${format.toUpperCase()}`);
+    } catch (error) {
+        document.getElementById('output').innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+        updateStatus("Error exporting data: " + error.message);
+    }
+}
+
+function changeTheme(theme) {
+    document.body.className = '';
+    if (theme === 'dark') {
+        document.body.classList.add('theme-dark');
+    } else if (theme === 'high-contrast') {
+        document.body.classList.add('theme-high-contrast');
+    }
+    localStorage.setItem('theme', theme);
+}
+
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            updateStatus(`Error attempting to enable full-screen mode: ${err.message}`);
+        });
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+function showSettings() {
+    document.getElementById('settingsModal').classList.remove('hidden');
+}
+
+function resetLayout() {
+    localStorage.removeItem('layout');
+    updateStatus("Layout reset. Refresh to see changes.");
+}
+
+// Query Builder Functions
+function refreshQueryBuilder() {
+    updateQueryBuilderTables();
+}
+
+function updateQueryBuilderTables() {
+    try {
+        const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table'");
+        const tablesList = document.getElementById('tablesList');
+        
+        if (tables.length && tables[0].values.length) {
+            tablesList.innerHTML = '';
+            tables[0].values.forEach(row => {
+                const div = document.createElement('div');
+                div.className = 'p-2 border-b cursor-pointer hover:bg-gray-100';
+                div.textContent = row[0];
+                div.onclick = () => selectTableForQueryBuilder(row[0]);
+                tablesList.appendChild(div);
+            });
+        } else {
+            tablesList.innerHTML = '<div class="text-sm text-gray-500">No tables found. Create tables first.</div>';
+        }
+    } catch (error) {
+        console.error("Error updating query builder tables:", error);
+    }
+}
+
+function selectTableForQueryBuilder(tableName) {
+    selectedTable = tableName;
+    selectedColumns = []; // Reset selected columns
+    
+    // Highlight selected table
+    document.querySelectorAll('#tablesList > div').forEach(div => {
+        if (div.textContent === tableName) {
+            div.classList.add('selected-table');
+        } else {
+            div.classList.remove('selected-table');
+        }
+    });
+    
+    // Update columns list
+    updateQueryBuilderColumns(tableName);
+    
+    // Update condition and sort dropdowns
+    updateConditionAndSortDropdowns(tableName);
+    
+    // Generate SQL
+    generateQueryBuilderSql();
+}
+
+function updateQueryBuilderColumns(tableName) {
+    try {
+        const columnsInfo = db.exec(`PRAGMA table_info(${tableName})`);
+        const columnsList = document.getElementById('columnsList');
+        
+        if (columnsInfo.length && columnsInfo[0].values.length) {
+            columnsList.innerHTML = '';
+            columnsInfo[0].values.forEach(row => {
+                const columnName = row[1];
+                const columnType = row[2];
+                
+                const div = document.createElement('div');
+                div.className = 'p-2 border-b cursor-pointer hover:bg-gray-100';
+                div.textContent = `${columnName} (${columnType})`;
+                div.dataset.column = columnName;
+                
+                // Check if this column is already selected
+                if (selectedColumns.includes(columnName)) {
+                    div.classList.add('selected-column');
+                }
+                
+                div.onclick = () => toggleColumnSelection(columnName);
+                columnsList.appendChild(div);
+            });
+        } else {
+            columnsList.innerHTML = '<div class="text-sm text-gray-500">No columns found.</div>';
+        }
+    } catch (error) {
+        console.error("Error updating query builder columns:", error);
+    }
+}
+
+function toggleColumnSelection(columnName) {
+    const columnsList = document.getElementById('columnsList');
+    const columnDiv = columnsList.querySelector(`[data-column="${columnName}"]`);
+    
+    if (selectedColumns.includes(columnName)) {
+        // Deselect the column
+        selectedColumns = selectedColumns.filter(col => col !== columnName);
+        columnDiv.classList.remove('selected-column');
+    } else {
+        // Select the column
+        selectedColumns.push(columnName);
+        columnDiv.classList.add('selected-column');
+    }
+    
+    generateQueryBuilderSql();
+}
+
+function selectAllColumns() {
+    if (!selectedTable) {
+        updateStatus("Please select a table first.");
+        return;
+    }
+    
+    try {
+        const columnsInfo = db.exec(`PRAGMA table_info(${selectedTable})`);
+        if (columnsInfo.length && columnsInfo[0].values.length) {
+            selectedColumns = columnsInfo[0].values.map(row => row[1]);
+            
+            // Update UI
+            const columnsList = document.getElementById('columnsList');
+            columnsList.querySelectorAll('div').forEach(div => {
+                div.classList.add('selected-column');
+            });
+            
+            generateQueryBuilderSql();
+        }
+    } catch (error) {
+        console.error("Error selecting all columns:", error);
+    }
+}
+
+function deselectAllColumns() {
+    selectedColumns = [];
+    
+    // Update UI
+    const columnsList = document.getElementById('columnsList');
+    columnsList.querySelectorAll('div').forEach(div => {
+        div.classList.remove('selected-column');
+    });
+    
+    generateQueryBuilderSql();
+}
+
+function updateConditionAndSortDropdowns(tableName) {
+    try {
+        const columnsInfo = db.exec(`PRAGMA table_info(${tableName})`);
+        const conditionColumn = document.getElementById('conditionColumn');
+        const sortColumn = document.getElementById('sortColumn');
+        
+        // Clear existing options
+        conditionColumn.innerHTML = '<option value="">-- Select Column --</option>';
+        sortColumn.innerHTML = '<option value="">-- Select Column --</option>';
+        
+        if (columnsInfo.length && columnsInfo[0].values.length) {
+            columnsInfo[0].values.forEach(row => {
+                const option1 = document.createElement('option');
+                option1.value = row[1];
+                option1.textContent = row[1];
+                conditionColumn.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = row[1];
+                option2.textContent = row[1];
+                sortColumn.appendChild(option2);
+            });
+        }
+    } catch (error) {
+        console.error("Error updating condition and sort dropdowns:", error);
+    }
+}
+
+function addCondition(logicalOperator) {
+    const column = document.getElementById('conditionColumn').value;
+    const operator = document.getElementById('conditionOperator').value;
+    const value = document.getElementById('conditionValue').value;
+    
+    if (!column) {
+        updateStatus("Please select a column for the condition.");
+        return;
+    }
+    
+    if (operator !== 'IS NULL' && operator !== 'IS NOT NULL' && !value) {
+        updateStatus("Please enter a value for the condition.");
+        return;
+    }
+    
+    const condition = {
+        column,
+        operator,
+        value,
+        logicalOperator: queryBuilderConditions.length > 0 ? logicalOperator : null
+    };
+    
+    queryBuilderConditions.push(condition);
+    updateConditionsList();
+    generateQueryBuilderSql();
+    
+    // Clear input fields
+    document.getElementById('conditionValue').value = '';
+}
+
+function updateConditionsList() {
+    const conditionsList = document.getElementById('conditionsList');
+    conditionsList.innerHTML = '';
+    
+    queryBuilderConditions.forEach((condition, index) => {
+        if (condition.logicalOperator) {
+            const operatorDiv = document.createElement('div');
+            operatorDiv.className = 'logical-operator';
+            operatorDiv.textContent = condition.logicalOperator;
+            conditionsList.appendChild(operatorDiv);
+        }
+        
+        const conditionDiv = document.createElement('div');
+        conditionDiv.className = 'condition-item';
+        
+        let conditionText = `${condition.column} ${condition.operator}`;
+        if (condition.operator !== 'IS NULL' && condition.operator !== 'IS NOT NULL') {
+            conditionText += ` ${condition.value}`;
+        }
+        
+        conditionDiv.innerHTML = `
+            <span>${conditionText}</span>
+            <button class="text-red-600" onclick="removeCondition(${index})">×</button>
+        `;
+        
+        conditionsList.appendChild(conditionDiv);
+    });
+}
+
+function removeCondition(index) {
+    queryBuilderConditions.splice(index, 1);
+    updateConditionsList();
+    generateQueryBuilderSql();
+}
+
+function addSort() {
+    const column = document.getElementById('sortColumn').value;
+    const direction = document.getElementById('sortDirection').value;
+    
+    if (!column) {
+        updateStatus("Please select a column for sorting.");
+        return;
+    }
+    
+    const sort = {
+        column,
+        direction
+    };
+    
+    queryBuilderSorts.push(sort);
+    updateSortsList();
+    generateQueryBuilderSql();
+}
+
+function updateSortsList() {
+    const sortList = document.getElementById('sortList');
+    sortList.innerHTML = '';
+    
+    queryBuilderSorts.forEach((sort, index) => {
+        const sortDiv = document.createElement('div');
+        sortDiv.className = 'condition-item';
+        sortDiv.innerHTML = `
+            <span>${sort.column} ${sort.direction}</span>
+            <button class="text-red-600" onclick="removeSort(${index})">×</button>
+        `;
+        
+        sortList.appendChild(sortDiv);
+    });
+}
+
+function removeSort(index) {
+    queryBuilderSorts.splice(index, 1);
+    updateSortsList();
+    generateQueryBuilderSql();
+}
+
+function generateQueryBuilderSql() {
+    if (!selectedTable) {
+        document.getElementById('generatedSql').value = '-- Select a table first';
+        return;
+    }
+    
+    // Build SELECT clause
+    let selectClause = 'SELECT ';
+    if (selectedColumns.length > 0) {
+        selectClause += selectedColumns.join(', ');
+    } else {
+        selectClause += '*';
+    }
+    
+    let sql = selectClause + ' FROM ' + selectedTable;
+    
+    // Add WHERE clause if there are conditions
+    if (queryBuilderConditions.length > 0) {
+        sql += ' WHERE ';
+        
+        queryBuilderConditions.forEach((condition, index) => {
+            if (index > 0 && condition.logicalOperator) {
+                sql += ` ${condition.logicalOperator} `;
+            }
+            
+            sql += `${condition.column} ${condition.operator}`;
+            
+            if (condition.operator !== 'IS NULL' && condition.operator !== 'IS NOT NULL') {
+                // Add quotes for text values
+                const isNumeric = !isNaN(condition.value) && condition.value !== '';
+                sql += isNumeric ? ` ${condition.value}` : ` '${condition.value}'`;
+            }
+        });
+    }
+    
+    // Add ORDER BY clause if there are sorts
+    if (queryBuilderSorts.length > 0) {
+        sql += ' ORDER BY ';
+        
+        queryBuilderSorts.forEach((sort, index) => {
+            if (index > 0) {
+                sql += ', ';
+            }
+            
+            sql += `${sort.column} ${sort.direction}`;
+        });
+    }
+    
+    sql += ';';
+    
+    document.getElementById('generatedSql').value = sql;
+}
+
+function useGeneratedSql() {
+    const generatedSql = document.getElementById('generatedSql').value;
+    document.getElementById(`sqlQuery${currentQueryTab}`).value = generatedSql;
+    switchTab('sql');
+    updateStatus("Generated SQL copied to query editor.");
+}
+
+function executeGeneratedSql() {
+    const generatedSql = document.getElementById('generatedSql').value;
+    document.getElementById(`sqlQuery${currentQueryTab}`).value = generatedSql;
+    executeQuery();
+}
+
+// Chart Functions
+function refreshChartTables() {
+    updateChartTableList();
+    updateStatus("Chart tables refreshed.");
+}
+
+function updateChartTableList() {
+    try {
+        const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table'");
+        const chartTable = document.getElementById('chartTable');
+        
+        // Clear existing options but keep the default option
+        const defaultOption = chartTable.querySelector('option[value=""]');
+        chartTable.innerHTML = '';
+        if (defaultOption) {
+            chartTable.appendChild(defaultOption);
+        }
+        
+        if (tables.length && tables[0].values.length) {
+            tables[0].values.forEach(row => {
+                const option = document.createElement('option');
+                option.value = row[0];
+                option.textContent = row[0];
+                chartTable.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error("Error updating chart table list:", error);
+    }
+}
+
+function updateChartColumns() {
+    const tableName = document.getElementById('chartTable').value;
+    const labelColumn = document.getElementById('labelColumn');
+    const dataColumn = document.getElementById('dataColumn');
+    const groupByColumn = document.getElementById('groupByColumn');
+    
+    // Clear existing options but keep the default options
+    const labelDefault = labelColumn.querySelector('option[value=""]');
+    labelColumn.innerHTML = '';
+    if (labelDefault) {
+        labelColumn.appendChild(labelDefault);
+    }
+    
+    const dataDefault = dataColumn.querySelector('option[value=""]');
+    dataColumn.innerHTML = '';
+    if (dataDefault) {
+        dataColumn.appendChild(dataDefault);
+    }
+    
+    const groupByDefault = groupByColumn.querySelector('option[value=""]');
+    groupByColumn.innerHTML = '';
+    if (groupByDefault) {
+        groupByColumn.appendChild(groupByDefault);
+    }
+    
+    if (!tableName) return;
+    
+    try {
+        const columnsInfo = db.exec(`PRAGMA table_info(${tableName})`);
+        
+        if (columnsInfo.length && columnsInfo[0].values.length) {
+            columnsInfo[0].values.forEach(row => {
+                const option1 = document.createElement('option');
+                option1.value = row[1];
+                option1.textContent = row[1];
+                labelColumn.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = row[1];
+                option2.textContent = row[1];
+                dataColumn.appendChild(option2);
+                
+                const option3 = document.createElement('option');
+                option3.value = row[1];
+                option3.textContent = row[1];
+                groupByColumn.appendChild(option3);
+            });
+        }
+    } catch (error) {
+        console.error("Error updating chart columns:", error);
+    }
+}
+
+function generateChart() {
+    const tableName = document.getElementById('chartTable').value;
+    const labelColumn = document.getElementById('labelColumn').value;
+    const dataColumn = document.getElementById('dataColumn').value;
+    const chartType = document.getElementById('chartType').value;
+    const aggregateFunction = document.getElementById('aggregateFunction').value;
+    const groupByColumn = document.getElementById('groupByColumn').value;
+    
+    if (!tableName || !labelColumn || !dataColumn) {
+        document.getElementById('chartError').textContent = 'Please select a table and both label and data columns.';
+        document.getElementById('chartError').classList.remove('hidden');
+        return;
+    }
+    
+    try {
+        let query;
+        if (aggregateFunction !== 'NONE' && groupByColumn) {
+            query = `SELECT ${labelColumn}, ${aggregateFunction}(${dataColumn}) as agg_value FROM ${tableName} GROUP BY ${groupByColumn}`;
+        } else {
+            query = `SELECT ${labelColumn}, ${dataColumn} FROM ${tableName}`;
+        }
+        
+        const results = db.exec(query);
+        
+        if (!results || !results[0] || !results[0].values.length) {
+            document.getElementById('chartError').textContent = 'No data available for chart.';
+            document.getElementById('chartError').classList.remove('hidden');
+            return;
+        }
+        
+        const labels = [];
+        const data = [];
+        
+        results[0].values.forEach(row => {
+            labels.push(row[0]);
+            data.push(aggregateFunction !== 'NONE' ? row[1] : row[1]);
+        });
+        
+        // Check if data is numeric for certain chart types
+        const isNumericData = data.every(value => !isNaN(parseFloat(value)));
+        
+        if ((chartType === 'bar' || chartType === 'line' || chartType === 'scatter') && !isNumericData) {
+            document.getElementById('chartError').textContent = 'Selected chart type requires numeric data. Please choose a different chart type or data column.';
+            document.getElementById('chartError').classList.remove('hidden');
+            return;
+        }
+        
+        // Clear any previous error
+        document.getElementById('chartError').classList.add('hidden');
+        
+        // Destroy previous chart if it exists
+        if (chart) {
+            chart.destroy();
+        }
+        
+        // Create new chart
+        const ctx = document.getElementById('dataChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: chartType,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: aggregateFunction !== 'NONE' ? 
+                        `${aggregateFunction} of ${dataColumn} by ${labelColumn}` : 
+                        `${dataColumn} by ${labelColumn}`,
+                    data: isNumericData ? data.map(Number) : data,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        updateStatus("Chart generated successfully.");
+    } catch (error) {
+        document.getElementById('chartError').textContent = 'Error generating chart: ' + error.message;
+        document.getElementById('chartError').classList.remove('hidden');
+        updateStatus("Error generating chart: " + error.message);
+    }
+}
+
+function clearChart() {
+    if (chart) {
+        chart.destroy();
+        chart = null;
+    }
+    document.getElementById('chartError').classList.add('hidden');
+    updateStatus("Chart cleared.");
+}
+
+function saveChart() {
+    if (!chart) {
+        updateStatus("No chart to save.");
+        return;
+    }
+    
+    // Create a temporary link to download the chart as an image
+    const link = document.createElement('a');
+    link.download = 'chart.png';
+    link.href = document.getElementById('dataChart').toDataURL();
+    link.click();
+    updateStatus("Chart saved as image.");
+}
+
+// Natural Language to SQL Processing
+        // Natural Language to SQL Processing
+        function processNlQuery() {
+            const nlQuery = document.getElementById('nlQueryInput').value.trim();
+            if (!nlQuery) {
+                alert('Please enter a question in natural language');
+                return;
+            }
+            
+            // Show loading state
+            document.getElementById('nlQueryResult').innerHTML = '<p class="text-blue-500">Processing your request...</p>';
+            
+            // Analyze the database schema to generate appropriate SQL
+            setTimeout(() => {
+                let sqlQuery = '';
+                let explanation = '';
+                
+                // Get all available tables
+                const tables = Object.keys(databaseSchema.tables);
+                
+                if (tables.length === 0) {
+                    document.getElementById('nlQueryResult').innerHTML = `
+                        <div class="mb-2">
+                            <p class="text-sm font-semibold">Error:</p>
+                            <p class="text-sm">No tables found in the database. Please create tables first.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Analyze the natural language query
+                const query = nlQuery.toLowerCase();
+                
+                // Pattern matching with dynamic table and column names
+                if (query.includes('top') || query.includes('highest') || query.includes('maximum')) {
+                    // Find a table with numeric columns
+                    let targetTable = null;
+                    let numericColumn = null;
+                    
+                    for (const table of tables) {
+                        const columns = databaseSchema.tables[table].columns;
+                        for (const column in columns) {
+                            if (columns[column].includes('INT') || columns[column].includes('REAL') || 
+                                columns[column].includes('NUMERIC') || columns[column].includes('FLOAT')) {
+                                targetTable = table;
+                                numericColumn = column;
+                                break;
+                            }
+                        }
+                        if (targetTable) break;
+                    }
+                    
+                    if (targetTable && numericColumn) {
+                        const limit = query.match(/\d+/) ? query.match(/\d+/)[0] : '5';
+                        sqlQuery = `SELECT * FROM ${targetTable} ORDER BY ${numericColumn} DESC LIMIT ${limit}`;
+                        explanation = `This query finds the top ${limit} records from ${targetTable} with the highest ${numericColumn}.`;
+                    }
+                } else if (query.includes('count') || query.includes('how many')) {
+                    // Find a table to count records from
+                    const targetTable = findMostRelevantTable(query, tables);
+                    if (targetTable) {
+                        sqlQuery = `SELECT COUNT(*) AS count FROM ${targetTable}`;
+                        explanation = `This query counts all records in the ${targetTable} table.`;
+                    }
+                } else if (query.includes('average') || query.includes('avg')) {
+                    // Find a table with numeric columns for averaging
+                    let targetTable = null;
+                    let numericColumn = null;
+                    
+                    for (const table of tables) {
+                        const columns = databaseSchema.tables[table].columns;
+                        for (const column in columns) {
+                            if (columns[column].includes('INT') || columns[column].includes('REAL') || 
+                                columns[column].includes('NUMERIC') || columns[column].includes('FLOAT')) {
+                                targetTable = table;
+                                numericColumn = column;
+                                break;
+                            }
+                        }
+                        if (targetTable) break;
+                    }
+                    
+                    if (targetTable && numericColumn) {
+                        sqlQuery = `SELECT AVG(${numericColumn}) AS average FROM ${targetTable}`;
+                        explanation = `This query calculates the average value of ${numericColumn} in the ${targetTable} table.`;
+                    }
+                } else if (query.includes('list') || query.includes('show') || query.includes('get')) {
+                    // Simple select query
+                    const targetTable = findMostRelevantTable(query, tables);
+                    if (targetTable) {
+                        sqlQuery = `SELECT * FROM ${targetTable}`;
+                        
+                        // Add WHERE clause if specific conditions are mentioned
+                        if (query.includes('where') || query.includes('with')) {
+                            // This is a simple implementation - in a real scenario, you'd parse the condition
+                            sqlQuery += " WHERE condition_column = 'value'";
+                            explanation = `This query retrieves all records from ${targetTable} with a specified condition. You'll need to update the WHERE clause.`;
+                        } else {
+                            explanation = `This query retrieves all records from the ${targetTable} table.`;
+                        }
+                    }
+                } else {
+                    // Generic fallback - select from the first table
+                    const firstTable = tables[0];
+                    sqlQuery = `SELECT * FROM ${firstTable} WHERE ${extractSearchTerms(query).join(' OR ')}`;
+                    explanation = `This query attempts to find records from ${firstTable} based on your question. You might need to refine the WHERE clause.`;
+                }
+                
+                // If no query was generated, provide a default
+                if (!sqlQuery && tables.length > 0) {
+                    sqlQuery = `SELECT * FROM ${tables[0]} LIMIT 10`;
+                    explanation = `This query retrieves sample records from the ${tables[0]} table.`;
+                }
+                
+                document.getElementById('nlQueryResult').innerHTML = `
+                    <div class="mb-2">
+                        <p class="text-sm font-semibold">Generated SQL:</p>
+                        <pre class="mt-1">${sqlQuery}</pre>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold">Explanation:</p>
+                        <p class="text-sm">${explanation}</p>
+                    </div>
+                `;
+                
+                // Store the generated query for later use
+                window.generatedNlQuery = sqlQuery;
+            }, 1000);
+        }
+        
+        // Helper function to find the most relevant table based on query terms
+        function findMostRelevantTable(query, tables) {
+            if (tables.length === 0) return null;
+            if (tables.length === 1) return tables[0];
+            
+            // Check if query directly mentions a table name
+            for (const table of tables) {
+                if (query.includes(table.toLowerCase())) {
+                    return table;
+                }
+            }
+            
+            // Check for common table patterns
+            if (query.includes('employee') || query.includes('staff') || query.includes('worker')) {
+                for (const table of tables) {
+                    if (table.toLowerCase().includes('employee') || table.toLowerCase().includes('staff')) {
+                        return table;
+                    }
+                }
+            }
+            
+            if (query.includes('product') || query.includes('item') || query.includes('inventory')) {
+                for (const table of tables) {
+                    if (table.toLowerCase().includes('product') || table.toLowerCase().includes('item')) {
+                        return table;
+                    }
+                }
+            }
+            
+            if (query.includes('customer') || query.includes('client')) {
+                for (const table of tables) {
+                    if (table.toLowerCase().includes('customer') || table.toLowerCase().includes('client')) {
+                        return table;
+                    }
+                }
+            }
+            
+            // Default to the first table
+            return tables[0];
+        }
+        
+        // Helper function to extract search terms from natural language query
+        function extractSearchTerms(query) {
+            // Remove common stop words
+            const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+            const words = query.split(' ').filter(word => 
+                word.length > 2 && !stopWords.includes(word.toLowerCase()));
+            
+            return words;
+        }
+        
+        function useNlQuery() {
+            if (window.generatedNlQuery) {
+                document.getElementById('sqlQuery0').value = window.generatedNlQuery;
+                switchTab('sql');
+            } else {
+                alert('No query has been generated yet. Please convert a natural language question first.');
+            }
+        }
+        
+        function executeNlQuery() {
+            if (window.generatedNlQuery) {
+                document.getElementById('sqlQuery0').value = window.generatedNlQuery;
+                executeQuery();
+            } else {
+                alert('No query has been generated yet. Please convert a natural language question first.');
+            }
+        }
+        
+        // Query Optimization
+        function optimizeCurrentQuery() {
+            const currentQuery = document.getElementById('sqlQuery0').value.trim();
+            if (!currentQuery) {
+                alert('Please enter a SQL query first');
+                return;
+            }
+            
+            // Show loading state
+            document.getElementById('aiOptimizationResult').innerHTML = '<p class="text-blue-500">Analyzing your query for optimization opportunities...</p>';
+            
+            // Analyze the query for optimization opportunities
+            setTimeout(() => {
+                let suggestions = '';
+                
+                // Check for common optimization patterns
+                if (currentQuery.includes('SELECT *')) {
+                    suggestions += '<p class="text-sm mb-2"><span class="font-semibold">Suggestion:</span> Avoid using SELECT *. Instead, specify the columns you need to reduce data transfer and improve performance.</p>';
+                }
+                
+                if (currentQuery.includes('LIKE') && currentQuery.includes('%')) {
+                    suggestions += '<p class="text-sm mb-2"><span class="font-semibold">Suggestion:</span> Leading wildcards in LIKE queries (e.g., %value) cannot use indexes. Consider full-text search alternatives if performance is critical.</p>';
+                }
+                
+                if (currentQuery.includes('JOIN') && !currentQuery.includes('ON')) {
+                    suggestions += '<p class="text-sm mb-2"><span class="font-semibold">Suggestion:</span> Your JOIN is missing an ON clause. This will create a Cartesian product which is likely not what you intended.</p>';
+                }
+                
+                if (currentQuery.includes('WHERE') && 
+                    (currentQuery.toLowerCase().includes('substring(') || 
+                     currentQuery.toLowerCase().includes('lower(') || 
+                     currentQuery.toLowerCase().includes('upper('))) {
+                    suggestions += '<p class="text-sm mb-2"><span class="font-semibold">Suggestion:</span> Functions on columns in WHERE clauses prevent index usage. Consider restructuring your query.</p>';
+                }
+                
+                // Check for potential missing indexes
+                const whereClause = extractWhereClause(currentQuery);
+                if (whereClause) {
+                    const conditions = parseWhereConditions(whereClause);
+                    conditions.forEach(condition => {
+                        if (condition.column && condition.operator && condition.value) {
+                            suggestions += `<p class="text-sm mb-2"><span class="font-semibold">Index suggestion:</span> Consider adding an index on ${condition.column} for better performance.</p>`;
+                        }
+                    });
+                }
+                
+                // If no specific suggestions, provide general advice
+                if (!suggestions) {
+                    suggestions = '<p class="text-sm">Your query looks good from a basic analysis. For deeper optimization, consider examining the execution plan.</p>';
+                }
+                
+                document.getElementById('aiOptimizationResult').innerHTML = `
+                    <div class="mb-2">
+                        <p class="text-sm font-semibold">Optimization Suggestions:</p>
+                        ${suggestions}
+                    </div>
+                `;
+            }, 1000);
+        }
+        
+        // Helper function to extract WHERE clause from SQL
+        function extractWhereClause(query) {
+            const whereIndex = query.toUpperCase().indexOf('WHERE');
+            if (whereIndex === -1) return null;
+            
+            // Find the end of the WHERE clause
+            let endIndex = query.toUpperCase().indexOf('GROUP BY', whereIndex);
+            if (endIndex === -1) endIndex = query.toUpperCase().indexOf('ORDER BY', whereIndex);
+            if (endIndex === -1) endIndex = query.toUpperCase().indexOf('LIMIT', whereIndex);
+            if (endIndex === -1) endIndex = query.length;
+            
+            return query.substring(whereIndex + 5, endIndex).trim();
+        }
+        
+        // Helper function to parse WHERE conditions
+        function parseWhereConditions(whereClause) {
+            const conditions = [];
+            const tokens = whereClause.split(/\s+(AND|OR)\s+/i);
+            
+            for (let i = 0; i < tokens.length; i += 2) {
+                const condition = tokens[i];
+                const parts = condition.split(/\s+/);
+                
+                if (parts.length >= 3) {
+                    conditions.push({
+                        column: parts[0],
+                        operator: parts[1],
+                        value: parts.slice(2).join(' ')
+                    });
+                }
+            }
+            
+            return conditions;
+        }
+        
+        function explainCurrentQuery() {
+            const currentQuery = document.getElementById('sqlQuery0').value.trim();
+            if (!currentQuery) {
+                alert('Please enter a SQL query first');
+                return;
+            }
+            
+            // Show loading state
+            document.getElementById('aiOptimizationResult').innerHTML = '<p class="text-blue-500">Analyzing your query...</p>';
+            
+            // Analyze the query and provide explanation
+            setTimeout(() => {
+                let explanation = '';
+                
+                if (currentQuery.toUpperCase().startsWith('SELECT')) {
+                    explanation = 'This is a SELECT query that retrieves data from the database. ';
+                    
+                    // Extract table name
+                    const fromIndex = currentQuery.toUpperCase().indexOf('FROM');
+                    if (fromIndex !== -1) {
+                        const afterFrom = currentQuery.substring(fromIndex + 4).trim();
+                        const tableName = afterFrom.split(/\s+/)[0];
+                        explanation += `It retrieves data from the ${tableName} table. `;
+                    }
+                    
+                    if (currentQuery.includes('FROM') && currentQuery.includes('WHERE')) {
+                        explanation += 'It filters records based on specified conditions. ';
+                    }
+                    
+                    if (currentQuery.includes('JOIN')) {
+                        explanation += 'It combines data from multiple tables. ';
+                    }
+                    
+                    if (currentQuery.includes('GROUP BY')) {
+                        explanation += 'It groups rows that have the same values into summary rows. ';
+                    }
+                    
+                    if (currentQuery.includes('ORDER BY')) {
+                        explanation += 'It sorts the result set in ascending or descending order. ';
+                    }
+                    
+                    if (currentQuery.includes('LIMIT')) {
+                        const limitMatch = currentQuery.match(/LIMIT\s+(\d+)/i);
+                        if (limitMatch) {
+                            explanation += `It limits the results to ${limitMatch[1]} records. `;
+                        }
+                    }
+                } else if (currentQuery.toUpperCase().startsWith('INSERT')) {
+                    explanation = 'This query inserts new records into a table. ';
+                } else if (currentQuery.toUpperCase().startsWith('UPDATE')) {
+                    explanation = 'This query modifies existing records in a table. ';
+                } else if (currentQuery.toUpperCase().startsWith('DELETE')) {
+                    explanation = 'This query deletes records from a table. ';
+                } else {
+                    explanation = 'This appears to be a valid SQL query. ';
+                }
+                
+                explanation += 'For optimal performance, ensure appropriate indexes exist on filtered columns.';
+                
+                document.getElementById('aiOptimizationResult').innerHTML = `
+                    <div class="mb-2">
+                        <p class="text-sm font-semibold">Query Explanation:</p>
+                        <p class="text-sm">${explanation}</p>
+                    </div>
+                `;
+            }, 1000);
+        }
+        
+        // Context-Aware Autocomplete
+        function handleSqlInput(tabIndex) {
+            const textarea = document.getElementById(`sqlQuery${tabIndex}`);
+            const cursorPosition = textarea.selectionStart;
+            const text = textarea.value;
+            
+            // Find the current word being typed
+            let start = cursorPosition - 1;
+            while (start >= 0 && /[a-zA-Z0-9_.]/.test(text.charAt(start))) {
+                start--;
+            }
+            start++;
+            
+            const currentWord = text.substring(start, cursorPosition);
+            
+            // If we have a current word, show suggestions
+            if (currentWord.length > 1) {
+                showAutocompleteSuggestions(currentWord, textarea, cursorPosition);
+            } else {
+                hideAutocomplete();
+            }
+        }
+        
+        function showAutocompleteSuggestions(currentWord, textarea, cursorPosition) {
+            // Get all available table and column names from the schema
+            const suggestions = [];
+            
+            // Add table names
+            for (const table in databaseSchema.tables) {
+                suggestions.push(table);
+                
+                // Add column names for each table
+                for (const column in databaseSchema.tables[table].columns) {
+                    suggestions.push(`${table}.${column}`);
+                    suggestions.push(column); // Add column name alone as well
+                }
+            }
+            
+            // Add SQL keywords
+            const sqlKeywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 
+                                'GROUP BY', 'ORDER BY', 'HAVING', 'LIMIT', 'INSERT', 'UPDATE', 'DELETE',
+                                'CREATE', 'ALTER', 'DROP', 'TABLE', 'INDEX', 'VIEW', 'UNION', 'ALL',
+                                'DISTINCT', 'AS', 'ON', 'AND', 'OR', 'NOT', 'IN', 'BETWEEN', 'LIKE',
+                                'IS', 'NULL', 'TRUE', 'FALSE', 'EXISTS', 'CASE', 'WHEN', 'THEN', 'ELSE',
+                                'END', 'ASC', 'DESC', 'VALUES', 'SET'];
+            
+            suggestions.push(...sqlKeywords);
+            
+            // Filter suggestions based on current word
+            const filtered = suggestions.filter(word => 
+                word.toLowerCase().startsWith(currentWord.toLowerCase()));
+            
+            if (filtered.length > 0) {
+                // Create or update suggestions box
+                let suggestionsBox = document.getElementById('autocompleteSuggestions');
+                if (!suggestionsBox) {
+                    suggestionsBox = document.createElement('div');
+                    suggestionsBox.id = 'autocompleteSuggestions';
+                    suggestionsBox.className = 'autocomplete-suggestions';
+                    document.body.appendChild(suggestionsBox);
+                }
+                
+                // Position the suggestions box near the cursor
+                const rect = textarea.getBoundingClientRect();
+                const lineHeight = parseInt(getComputedStyle(textarea).lineHeight);
+                const lines = textarea.value.substr(0, cursorPosition).split('\n');
+                const line = lines.length;
+                const ch = lines[lines.length - 1].length;
+                
+                suggestionsBox.style.top = (rect.top + (line * lineHeight)) + 'px';
+                suggestionsBox.style.left = (rect.left + (ch * 8)) + 'px'; // Approximate character width
+                
+                // Populate suggestions
+                suggestionsBox.innerHTML = '';
+                filtered.forEach(word => {
+                    const div = document.createElement('div');
+                    div.className = 'autocomplete-suggestion';
+                    div.textContent = word;
+                    div.onclick = () => {
+                        // Replace the current word with the suggestion
+                        const text = textarea.value;
+                        const startPos = cursorPosition - currentWord.length;
+                        textarea.value = text.substring(0, startPos) + word + text.substring(cursorPosition);
+                        textarea.focus();
+                        textarea.setSelectionRange(startPos + word.length, startPos + word.length);
+                        hideAutocomplete();
+                    };
+                    suggestionsBox.appendChild(div);
+                });
+                
+                suggestionsBox.style.display = 'block';
+            } else {
+                hideAutocomplete();
+            }
+        }
+        
+        function hideAutocomplete() {
+            const suggestionsBox = document.getElementById('autocompleteSuggestions');
+            if (suggestionsBox) {
+                suggestionsBox.style.display = 'none';
+            }
+        }
+        
+        // Close autocomplete when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            if (e.target.id !== 'autocompleteSuggestions' && 
+                !e.target.classList.contains('autocomplete-suggestion')) {
+                hideAutocomplete();
+            }
+        });
+        
+        // Initialize the AI features when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listener for the natural language input to allow Enter key
+            document.getElementById('nlQueryInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    processNlQuery();
+                }
+            });
+            
+            // Initialize the database
+            initDB();
+        });
+        
+        // Update the database schema after executing queries that might change the schema
+        const originalExecuteQuery = executeQuery;
+        executeQuery = function() {
+            const result = originalExecuteQuery.apply(this, arguments);
+            updateDatabaseSchema(); // Update schema information after query execution
+            return result;
+        };
+          function exitToIntro() {
+            if (confirm('Are you sure you want to exit? Any unsaved changes will be lost.')) {
+                window.location.href = 'intro.html';
+            }
+        }
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    initDB();
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.getElementById('themeSelector').value = savedTheme;
+    changeTheme(savedTheme);
+    
+    // Set up keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            executeQuery();
+        }
+    });
+});
+    </script>
+</body>
+</html>
